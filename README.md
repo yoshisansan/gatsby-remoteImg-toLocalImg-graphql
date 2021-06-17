@@ -8,9 +8,9 @@
   
   
   
-## 🚀 Quick start (Gatsby Cloud)
+## 🚀 始め方
   
-
+  
 gatsby develop
   
   
