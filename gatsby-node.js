@@ -37,6 +37,7 @@ exports.sourceNodes = async ({ actions, createNodeId }) => {
   };
 
   const { createNode } = actions;
+
   const getUrlOption = (number, url) => {
     const UrlandOption = String(url + `?limit=${number}`)
     return String(UrlandOption);
@@ -54,6 +55,8 @@ exports.sourceNodes = async ({ actions, createNodeId }) => {
         }
       }
     }
+
+    // microCMSのコンテンツを引っ張ろうとするとデフォルトでlimit=10のオプションがついており全てのコンテンツを引っ張ってこれない。totalCountでコンテンツ総数をチェック
     const {url, option} = fetchTarget;
     const getTotalCountUrl = getUrlOption(0, url);
     const totalCountUrlData = await fetch(getTotalCountUrl, option);
@@ -67,7 +70,6 @@ exports.sourceNodes = async ({ actions, createNodeId }) => {
   }
 
   const microContentData = await getMicroCMSdata();
-
   // テストなので画像データを持っているコンテンツだけにあえて絞る
   const targetMicroContents =
     microContentData.contents
@@ -79,6 +81,19 @@ exports.sourceNodes = async ({ actions, createNodeId }) => {
     createNode(nodeData);
   });
 };
+
+  // microCMSを持っていない人の確認用ダミー処理
+  // const dammyProjects = {
+  //  id: 'dammy',
+  //  title: 'dammyTitle',
+  //   images : [`https://1.bp.blogspot.com/-eZgH3AYPT0Y/X7zMHMTQO2I/AAAAAAABcYU/Fk3btazNl6oqIHrfcxgJBiUKKSE1tSAIwCNcBGAsYHQ/s400/food_bunka_fry.png`, `https://1.bp.blogspot.com/-uc1fVHdj2RQ/X9GYFTpvwxI/AAAAAAABcs4/Gez9aftyhdc_Hm2kXt5RJm_vK9SuShz8wCNcBGAsYHQ/s400/food_komochi_konnyaku.png`, `https://1.bp.blogspot.com/-g0tbS-Rf0pk/X3hF_S_ScZI/AAAAAAABbmQ/u0Pd0qVobbYOfFYhmls3iBXzIUiuta2-gCNcBGAsYHQ/s400/food_sobagaki.png`]
+  // }
+  // const projects = await dammyProjects;
+  // projects.images.map((image) => {
+  //   const imgObj = createImageObjectFromURL(image);
+  //   const nodeData = turnImageObjectIntoGatsbyNode(imgObj, projects);
+  //   createNode(nodeData);
+  // });
 
 exports.onCreateNode = async ({
   node, actions, store, getCache, createNodeId
@@ -100,4 +115,4 @@ exports.onCreateNode = async ({
       node.image___NODE = fileNode.id;
     }
   }
- };
+};
