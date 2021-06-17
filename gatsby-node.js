@@ -19,14 +19,15 @@ exports.sourceNodes = async ({ actions, createNodeId }) => {
       ...image,
       ...content,
       id: nodeId,
-      parent: null,
-      children: [],
+      microContent,
       internal: {
         type: 'Image',
         content: nodeContent,
         contentDigest: nodeContentDigest,
       },
     };
+
+    // nodeとして格納されonCreateNodeのnode変数からも取得できるようになる
     return nodeData;
   };
 
@@ -35,8 +36,6 @@ exports.sourceNodes = async ({ actions, createNodeId }) => {
     const id = url.slice(lastIndexOfSlash + 1, url.lastIndexOf('.'));
     return { id, image: id, url };
   };
-
-  const { createNode } = actions;
 
   const getUrlOption = (number, url) => {
     const UrlandOption = String(url + `?limit=${number}`)
@@ -68,12 +67,13 @@ exports.sourceNodes = async ({ actions, createNodeId }) => {
 
     return { contents, totalCount };
   }
-
   const microContentData = await getMicroCMSdata();
   // テストなので画像データを持っているコンテンツだけにあえて絞る
   const targetMicroContents =
     microContentData.contents
       .filter(({thumbnail}) => thumbnail !== undefined);
+
+  const { createNode } = actions;
 
   targetMicroContents.map(content => {
     const imgObj = createImageObjectFromURL(content.thumbnail.url);
@@ -95,11 +95,12 @@ exports.sourceNodes = async ({ actions, createNodeId }) => {
   //   createNode(nodeData);
   // });
 
+// onCreateNodeはsourceNodesの中でcreateNodeしたものを含め全ての生成されたNodeを順番に取得してくれる
 exports.onCreateNode = async ({
   node, actions, store, getCache, createNodeId
 }) => {
   if (node.internal.type === 'Image') {
-    const { createNode } = actions;
+    const { createNode, createNodeField } = actions;
 
     const fileNode = await createRemoteFileNode({
        url: node.url, // string that points to the URL of the image
@@ -110,9 +111,52 @@ exports.onCreateNode = async ({
        createNodeId, // helper function in gatsby-node to generate the node id
     });
 
+    // Object配列化
+    const microContentArr = Object.entries(node.microContent).map( ( [key, value] ) => [key, value]);
+    microContentArr.map( async([key, value]) => {
+      await createNodeField(
+        {
+          node: fileNode,
+          name: key,
+          value: value,
+        });
+    });
+    // await createNodeField(
+    //   {
+    //     node: fileNode,
+    //     name: 'Sample',
+    //     value: 'true',
+    //   });
+
+    // await createNodeField(
+    //   {
+    //     node: fileNode,
+    //     name: 'Test',
+    //     value: 'true',
+    //   });
+
     if (fileNode) {
       // link the File node to Image node at field image
       node.image___NODE = fileNode.id;
     }
   }
 };
+
+
+// {
+//   id: 'ca1ba919-fd98-53cf-9769-731487ddc946',
+//   image: '%20100g-%E7%96%B2%E5%8A%B4',
+//   url: 'https://images.microcms-assets.io/assets/8fdf35cd24bb4480b5f5f00ecf473e4b/8e800d7086b446ec8b8dc2731b181fb9/%20100g-%E7%96%B2%E5%8A%B4.png',
+//   content: '疲労回復に良いとされる栄養素は何をどのくらい取れば良い？全食材の中から多い順に並べ替え',
+//   image___NODE: '9d388a99-c326-549a-a4a6-60d33bcdd21d',
+//   parent: null,
+//   children: [],
+//   internal: {
+//     type: 'Image',
+//     content: '{"id":"%20100g-%E7%96%B2%E5%8A%B4","image":"%20100g-%E7%96%B2%E5%8A%B4","url":"https://images.microcms-assets.io/assets/8fdf35cd24bb4480b5f5f00ecf473e4
+// b/8e800d7086b446ec8b8dc2731b181fb9/%20100g-%E7%96%B2%E5%8A%B4.png"}',
+//     contentDigest: 'a25bd9d5b367fce42000823df5ab9cea',
+//     owner: 'default-site-plugin',
+//     counter: 81
+//   }
+// }
