@@ -4,7 +4,7 @@ API（microCMS）から引っ張ってきた画像をローカルフォルダ（
 
 gatsby-node.js 上で API を叩いて任意の JSON データを取得 →sourceNodes でトップレベルの Node 作成 → 作成したトップレベルの Node を onNodeCreate で呼び出し gatsby-plugin-image の createRemoteFileNode で ImageSharp 化に対応することでローカル上のデータと同じように画像最適化処理をできるようにしています。
 
-詳細記事：準備中
+詳細記事：<a href="https://qiita.com/akifumiyoshimu/items/ea94424bc9aa8e759df8">外部API(リモート)で取得した画像URLを GatsbyJS の gatsby-plugin-image（前 gatsby-image）で最適化する方法</a>
 
 ## 🚀 始め方
 
