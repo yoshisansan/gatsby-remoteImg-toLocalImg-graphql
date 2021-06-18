@@ -1,10 +1,16 @@
-import React from "react";
-import { StaticImage, GatsbyImage, getImage } from "gatsby-plugin-image";
-import { graphql } from "gatsby";
+import React from "react"
+import { StaticImage, GatsbyImage, getImage } from "gatsby-plugin-image"
+import { graphql } from "gatsby"
 
 const Home = ({ data }) => {
-  const GatsbyImages = data.allFile.edges.map(({node}) => {
-    return <GatsbyImage image={getImage(node.childImageSharp)} alt={node.name} key={node.name} />
+  const GatsbyImages = data.allFile.edges.map(({ node }) => {
+    return (
+      <GatsbyImage
+        image={getImage(node.childImageSharp)}
+        alt={node.name}
+        key={node.name}
+      />
+    )
   })
 
   return (
@@ -19,7 +25,7 @@ const Home = ({ data }) => {
         quality="40"
       />
     </div>
-  );
+  )
 }
 
 export const query = graphql`
@@ -30,7 +36,7 @@ export const query = graphql`
           name
           childImageSharp {
             gatsbyImageData(
-              blurredOptions: {width: 100}
+              blurredOptions: { width: 100 }
               width: 600
               placeholder: BLURRED
             )
@@ -39,6 +45,6 @@ export const query = graphql`
       }
     }
   }
-`;
+`
 
-export default Home;
+export default Home

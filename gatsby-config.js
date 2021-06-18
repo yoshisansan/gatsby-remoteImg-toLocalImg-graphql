@@ -15,13 +15,15 @@ module.exports = {
       },
     },
     {
-      resolve: 'gatsby-source-microcms',
+      resolve: "gatsby-source-microcms",
       options: {
         apiKey: process.env.MICROCMS_API_KEY,
-        serviceId: '100g',
-        apis: [{
-          endpoint: '100g',
-        }],
+        serviceId: "100g",
+        apis: [
+          {
+            endpoint: "100g",
+          },
+        ],
       },
     },
   ],
