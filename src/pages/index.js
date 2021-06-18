@@ -17,13 +17,13 @@ const Home = ({ data }) => {
     <div>
       <h1>Hello world!</h1>
       {GatsbyImages}
-      <StaticImage
+      {/* <StaticImage
         src="../images/shiva.jpeg"
         width={600}
         alt="Shiva"
         placeholder="blurred"
         quality="40"
-      />
+      /> */}
     </div>
   )
 }
