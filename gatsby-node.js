@@ -1,19 +1,29 @@
 const { createRemoteFileNode } = require("gatsby-source-filesystem")
 let crypto = require("crypto")
 const fetch = require("node-fetch")
+const graphql = require('gatsby');
+// const getNoImgURL = require("./src/gatsby-node/getNoImgURL");
 
+// const getNoImgGraphQL = graphql(`
+//   query getNoImg {
+//     file(
+//       childImageSharp: {id: {eq: "3e646b34-f77d-5cb7-8491-02d018e19ebc"}}
+//     ) {
+//       publicURL
+//     }
+//   }
+// `);
+// console.log(getNoImgGraphQL);
 //URLにオプション付与
 const getUrlOption = (number, url) => {
   const UrlandOption = String(url + `?limit=${number}`)
   return String(UrlandOption)
 }
-
 const getMicroCMSdata = async () => {
   const fetchTarget = {
     url: `https://100g.microcms.io/api/v1/100g`,
     option: {
       method: "GET",
-      mode: "cors",
       headers: {
         "Content-Type": "application/json",
         "X-API-KEY": process.env.MICROCMS_API_KEY,
@@ -36,25 +46,25 @@ const getMicroCMSdata = async () => {
 
 // トップレベルのNodeを作成
 exports.sourceNodes = async ({ actions: { createNode }, createNodeId }) => {
-  const turnImageObjectIntoGatsbyNode = (image, microContent) => {
+  const turnImageObjectIntoGatsbyNode = (contentObj, microContent) => {
     const content = {
       content: microContent.title,
       ["image___NODE"]: createNodeId(`project-image-{${microContent.id}}`),
     }
-    const nodeId = createNodeId(`image-{${image.id}}`)
-    const nodeContent = JSON.stringify(image)
+    const nodeId = createNodeId(`image-{${contentObj.id}}`)
+    const nodeContent = JSON.stringify(contentObj)
     const nodeContentDigest = crypto
       .createHash("md5")
       .update(nodeContent)
       .digest("hex")
 
     const nodeData = {
-      ...image,
+      ...contentObj,
       ...content,
       id: nodeId,
       microContent,
       internal: {
-        type: "Image",
+        type: "Microcms",
         content: nodeContent,
         contentDigest: nodeContentDigest,
       },
@@ -73,14 +83,21 @@ exports.sourceNodes = async ({ actions: { createNode }, createNodeId }) => {
 
   const microContentData = await getMicroCMSdata()
 
-  // テストなので画像データを持っているコンテンツだけにあえて絞る
-  const targetMicroContents = microContentData.contents.filter(
-    ({ thumbnail }) => thumbnail !== undefined
-  )
+  // 画像データを持っているコンテンツだけにあえて絞る場合の変数格納
+  // const targetMicroContents = microContentData.contents.filter(
+  //   ({ thumbnail }) => thumbnail !== undefined
+  // );
 
-  targetMicroContents.map(content => {
-    const imgObj = createImageObjectFromURL(content.thumbnail.url)
-    const nodeData = turnImageObjectIntoGatsbyNode(imgObj, content)
+  microContentData.contents.map(content => {
+    let contentObj;
+    if(content.thumbnail !== null && content.thumbnail !== undefined){
+      contentObj = createImageObjectFromURL(content.thumbnail.url)
+    } else {
+      // 全く同じURLだと重複分は消えてしまうためcontent.idをオプション付与してURLの重複を避ける
+      const NoImageURL = `https://firebasestorage.googleapis.com/v0/b/one-hundred-g.appspot.com/o/forGatsbyNodeJSFile%2FNoImage%2F%20100g-NoImg.png?alt=media&id=${content.id}`;
+      contentObj = { id: content.slug, image: content.id, url: NoImageURL }
+    }
+    const nodeData = turnImageObjectIntoGatsbyNode(contentObj, content)
     createNode(nodeData)
   })
 }
@@ -94,7 +111,7 @@ exports.onCreateNode = async ({
   createNodeId,
 }) => {
   // onCreateNodeで設定したtypeにあったものだけ処理をする
-  if (node.internal.type !== "Image") return
+  if (node.internal.type !== "Microcms") return;
 
   const { createNode, createNodeField } = actions
   const fileNode = await createRemoteFileNode({
