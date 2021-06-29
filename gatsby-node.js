@@ -1,20 +1,9 @@
 const { createRemoteFileNode } = require("gatsby-source-filesystem")
 let crypto = require("crypto")
 const fetch = require("node-fetch")
-const graphql = require('gatsby');
-// const getNoImgURL = require("./src/gatsby-node/getNoImgURL");
+const path = require('path');
+const ImagePageTemplate = path.resolve('./src/template/ImagePageTemplate.js');
 
-// const getNoImgGraphQL = graphql(`
-//   query getNoImg {
-//     file(
-//       childImageSharp: {id: {eq: "3e646b34-f77d-5cb7-8491-02d018e19ebc"}}
-//     ) {
-//       publicURL
-//     }
-//   }
-// `);
-// console.log(getNoImgGraphQL);
-//URLにオプション付与
 const getUrlOption = (number, url) => {
   const UrlandOption = String(url + `?limit=${number}`)
   return String(UrlandOption)
@@ -170,3 +159,48 @@ exports.onCreateNode = async ({
 //     name: 'Test',
 //     value: 'hello test!',
 //   });
+
+
+// おまけ（Qiita記事とはあまり関係ない）
+// 別途src/templateページを生成する処理（gatsbyImageSharpをバケツリレーで渡してもGatsbyImageを使えるのかどうかの検証）
+exports.createPages = async({graphql, actions: { createPage }}) => {
+  const cmsData = await graphql(`
+    query queryMicroCMS {
+      allFile {
+        edges {
+          node {
+            childImageSharp {
+              gatsbyImageData(
+                blurredOptions: { width: 100 }
+                width: 600
+                placeholder: BLURRED
+              )
+            }
+            fields {
+              slug
+              title
+            }
+          }
+        }
+      }
+    }
+  `);
+  const cmsEdges = cmsData.data.allFile.edges;
+  const createPageTemplate = async(graphEdgesData) => {
+    const filtedContentData = graphEdgesData
+      .filter(nodeObj => nodeObj.node.fields !== null && nodeObj.node.fields !== undefined)
+      .map(nodeObj => {
+        console.log(typeof nodeObj.node.childImageSharp);
+        return {slug: nodeObj.node.fields.slug, title: nodeObj.node.fields.slug, gatsbyImg: nodeObj.node.childImageSharp}
+      });
+
+    await filtedContentData.forEach((content) => {
+      createPage({
+        path: `/${content.slug}`,
+        component: ImagePageTemplate,
+        context: content,
+      });
+    });
+  }
+  createPageTemplate(cmsEdges);
+}
